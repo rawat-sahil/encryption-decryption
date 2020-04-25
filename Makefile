@@ -11,12 +11,12 @@ gen_rand:gen_rand.o $(helperfunction)
 	g++ $^ $(flags) -o $@
 	sudo chmod u+s $@
 
-fput_encrypt_rsa:$(helperfunction) fget.o
+fput_encrypt_rsa:$(helperfunction) fput_encrypt_rsa.o
 	g++ $^ $(flags) -o $@
 	sudo chmod u+s $@
 
 
-fget_decrypt_rsa:$(helperfunction) fput_encrypt.o
+fget_decrypt_rsa:$(helperfunction) fget_decrypt_rsa.o
 	g++ $^ $(flags) -o $@
 	sudo chmod u+s $@
 

@@ -27,8 +27,14 @@
 #include<shadow.h>
 #include <pwd.h>
 
+void fsign(std::string filename);
+void fverify(std::string filename);
 void get_key_iv(unsigned char * key,unsigned char *iv,int uid);
 void gen_rand(std::string filename);
+int check_file_exist(std::string filename,struct stat *statbuf);
+int check_read_permission(std::string filename);
+int check_write_permission(std::string filename);
+void get_key_iv(unsigned char *key, unsigned char *iv,int uid,std::string randomfile);
 void handleErrors();
 int decrypt(unsigned char *ciphertext, int ciphertext_len, unsigned char *key,unsigned char *iv, unsigned char *plaintext);
 int encrypt(unsigned char *plaintext, int plaintext_len, unsigned char *key,unsigned char *iv, unsigned char *ciphertext);

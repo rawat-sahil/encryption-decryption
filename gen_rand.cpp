@@ -27,22 +27,22 @@ void gen_rand(std::string string_num,std::string filename){
     close(fd);
     myfile.open(filename.c_str(),std::ios::out|std::ios::binary);
     myfile<<ciphertext<<"\n";
-//    std::cout<<buff<<"\n";
-//    std::cout<<ciphertext<<"\n";
+//    std::cout<<"random key "<<buff<<"\n";
+//    std::cout<<"encrypted random key "<<ciphertext<<"\n";
     myfile.close();
 
 
-//    myfile.open(filename.c_str(),std::ios::in);
-//    std::string yoboi;
-//    getline(myfile,yoboi);
-//    std::cout<<buff<<" "<<strlen((char*)buff)<<"\n";
-//    std::cout<<ciphertext<<" "<<strlen((char *)ciphertext)<<"\n";
-//    std::cout<<yoboi<<" "<<strlen(yoboi.c_str())<<"\n";
-//    unsigned  char expected[100];
-////    expected[num+1]='\0';
-//    int expected_len=decrypt((unsigned char *)yoboi.c_str(),strlen(yoboi.c_str()),key,iv,expected);
-//    expected[expected_len]='\0';
-//    std::cout<<expected<<" "<<strlen((char *)expected)<<"\n";
+    myfile.open(filename.c_str(),std::ios::in);
+    std::string yoboi;
+    getline(myfile,yoboi);
+    std::cout<<"random key "<<buff<<" "<<strlen((char*)buff)<<"\n";
+    std::cout<<"encrypted random key "<<ciphertext<<" "<<strlen((char *)ciphertext)<<"\n";
+    std::cout<<"read from file "<<yoboi<<" "<<strlen(yoboi.c_str())<<"\n";
+    unsigned  char expected[100];
+//    expected[num+1]='\0';
+    int expected_len=decrypt((unsigned char *)yoboi.c_str(),strlen(yoboi.c_str()),key,iv,expected);
+    expected[expected_len]='\0';
+    std::cout<<"decrypted  "<<expected<<" "<<strlen((char *)expected)<<"\n";
 }
 int main(int argc,char * argv[]){
     if(argc==1){
