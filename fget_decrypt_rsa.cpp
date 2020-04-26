@@ -5,6 +5,7 @@
 #include "helper.h"
 
 void fget_decrypt_rsa(std::string randomfile,std::string publickeyFile,std::string filename){
+    check_read_permission(randomfile);
     check_read_permission(filename); // exits the program either the file does not exist or does not have read permission
     unsigned char key[33];
     unsigned char iv[17] ;

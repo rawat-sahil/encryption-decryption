@@ -50,8 +50,8 @@ void fsign(std::string filename,std::string privatekeyFile){
    std::cout<<RSASign(rsa,(const unsigned char *)wholefile.c_str(),strlen(wholefile.c_str()),&EncMsg,&MsgLenEnc);
 //   std::cout<<"after sign\n";
     EncMsg[MsgLenEnc]='\0';
-    std::cout<<"hmac length"<<MsgLenEnc<<"  size  "<<strlen((char*)EncMsg)<<" \n";
-    std::cout<<"hmac "<<EncMsg<<"\n";
+//    std::cout<<"hmac length"<<MsgLenEnc<<"  size  "<<strlen((char*)EncMsg)<<" \n";
+//    std::cout<<"hmac "<<EncMsg<<"\n";
    myfile.write((char *)EncMsg,MsgLenEnc);
     myfile.close();
 }
@@ -79,6 +79,7 @@ void fverify(std::string filename,std::string publickeyFile){
     char  wholefile[256];
     signatureFile=std::string(filename);
     signatureFile.append(".sign");
+    check_read_permission(signatureFile);
     myfile.open(signatureFile.c_str(),std::ios::in);
     myfile.read(wholefile,256);
 //    std::cout<<wholefile<<"\n";
@@ -102,11 +103,11 @@ void fverify(std::string filename,std::string publickeyFile){
 
 
 
-    std::cout<<"encrypted_text "<<wholefile<<"\n";
-    std::cout<<"length as calculated by strlen"<<strlen(wholefile)<<"\n";
+//    std::cout<<"encrypted_text "<<wholefile<<"\n";
+//    std::cout<<"length as calculated by strlen"<<strlen(wholefile)<<"\n";
     bool authentic,result;
     result=RSAVerifySignature(rsa,(unsigned char *)wholefile,256,encrypted_text.c_str(),strlen(encrypted_text.c_str()),&authentic);
-    std::cout<<"result "<<result<<"  authentic "<<authentic<<std::endl;
+//    std::cout<<"result "<<result<<"  authentic "<<authentic<<std::endl;
     if(authentic){
         std::cout<<"rsa hmac verified\n";
     } else{
