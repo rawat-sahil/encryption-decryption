@@ -26,9 +26,10 @@
 #include <openssl/err.h>
 #include<shadow.h>
 #include <pwd.h>
-
-void fsign(std::string filename);
-void fverify(std::string filename);
+bool RSASign( RSA* rsa,const unsigned char* Msg,size_t MsgLen,unsigned char** EncMsg,size_t* MsgLenEnc);
+bool RSAVerifySignature( RSA* rsa,unsigned char* MsgHash,size_t MsgHashLen,const char* Msg,size_t MsgLen,bool* Authentic);
+void fsign(std::string filename,std::string privatekeyFile);
+void fverify(std::string filename,std::string publickeyFile);
 void get_key_iv(unsigned char * key,unsigned char *iv,int uid);
 void gen_rand(std::string filename);
 int check_file_exist(std::string filename,struct stat *statbuf);

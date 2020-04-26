@@ -2,7 +2,7 @@ flags=-g -lcrypto
 dependecy= helper.h
 helperfunction=helper.o
 all:gen_rand fput_encrypt_rsa fget_decrypt_rsa
-	touch testfile
+
 
 %.o:%.cpp $(depends)
 	g++ $^ $(flags) -c -o $@
@@ -22,4 +22,4 @@ fget_decrypt_rsa:$(helperfunction) fget_decrypt_rsa.o
 
 
 clean:
-	-rm *o gen_rand fput_encrypt_rsa fget_decrypt_rsa something
+	-rm *o gen_rand fput_encrypt_rsa fget_decrypt_rsa randfile something something.sign

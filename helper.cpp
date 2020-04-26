@@ -8,13 +8,111 @@
 void fsign(std::string filename,std::string privatekeyFile){
     std::fstream myfile;
     myfile.open(privatekeyFile,std::ios::in);
-    std::string privatekey;
-    getline(myfile,privatekey);
-    RSA *rsa;
+    std::string privatekey,line;
+    if (myfile.is_open())
+    {
+        while ( getline (myfile,line) )
+        {
+            privatekey.append(line);
+            privatekey.append("\n");
+        }
+        myfile.close();
+    }
+//    std::cout<<privatekey;
+    RSA *rsa=NULL;
     BIO * keybio = BIO_new_mem_buf((void*)privatekey.c_str(), -1);
     rsa = PEM_read_bio_RSAPrivateKey(keybio, &rsa,NULL, NULL);
+    myfile.close();
+
+    struct stat statbuf;
+    check_file_exist(filename, &statbuf);
+
+    myfile.open(filename.c_str(),std::ios::in);
+    std::string wholefile,signatureFile;
+    signatureFile=std::string(filename);
+    signatureFile.append(".sign");
+    if (myfile.is_open())
+    {
+        while ( getline (myfile,line) )
+        {
+            wholefile.append(line);
+        }
+        myfile.close();
+    }
+
+    int fd=creat(signatureFile.c_str(),0664);
+    fchown(fd,statbuf.st_uid,statbuf.st_gid);
+    close(fd);
+    myfile.open(signatureFile.c_str(),std::ios::out|std::ios::binary);
+
+    unsigned char * EncMsg;
+    size_t MsgLenEnc;
+   std::cout<<RSASign(rsa,(const unsigned char *)wholefile.c_str(),strlen(wholefile.c_str()),&EncMsg,&MsgLenEnc);
+//   std::cout<<"after sign\n";
+    EncMsg[MsgLenEnc]='\0';
+    std::cout<<"hmac length"<<MsgLenEnc<<"  size  "<<strlen((char*)EncMsg)<<" \n";
+    std::cout<<"hmac "<<EncMsg<<"\n";
+   myfile.write((char *)EncMsg,MsgLenEnc);
+    myfile.close();
 }
 void fverify(std::string filename,std::string publickeyFile){
+    check_read_permission(filename);
+    std::fstream myfile;
+    myfile.open(publickeyFile,std::ios::in);
+    std::string publickey,line;
+    if (myfile.is_open())
+    {
+        while ( getline (myfile,line) )
+        {
+            publickey.append(line);
+            publickey.append("\n");
+        }
+        myfile.close();
+    }
+//    std::cout<<publickey;
+    RSA *rsa=NULL;
+    BIO * keybio = BIO_new_mem_buf((void*)publickey.c_str(), -1);
+    rsa = PEM_read_bio_RSA_PUBKEY(keybio, &rsa,NULL, NULL);
+//    std::cout<<"rsa converted\n";
+
+    std::string signatureFile;
+    char  wholefile[256];
+    signatureFile=std::string(filename);
+    signatureFile.append(".sign");
+    myfile.open(signatureFile.c_str(),std::ios::in);
+    myfile.read(wholefile,256);
+//    std::cout<<wholefile<<"\n";
+    myfile.close();
+
+    std::string encrypted_text;
+    myfile.open(filename,std::ios::in);
+    if (myfile.is_open())
+    {
+        while ( getline (myfile,line) )
+        {
+            encrypted_text.append(line);
+        }
+        myfile.close();
+    }
+
+//    myfile.open("temp.txt",std::ios::out);
+//    myfile<<wholefile;
+//    myfile.close();
+
+
+
+
+    std::cout<<"encrypted_text "<<wholefile<<"\n";
+    std::cout<<"length as calculated by strlen"<<strlen(wholefile)<<"\n";
+    bool authentic,result;
+    result=RSAVerifySignature(rsa,(unsigned char *)wholefile,256,encrypted_text.c_str(),strlen(encrypted_text.c_str()),&authentic);
+    std::cout<<"result "<<result<<"  authentic "<<authentic<<std::endl;
+    if(authentic){
+        std::cout<<"rsa hmac verified\n";
+    } else{
+        std::cout<<"rsa hmac verification failed\n";
+        exit(-1);
+    }
 
 }
 
@@ -34,7 +132,7 @@ void get_key_iv(unsigned char *key, unsigned char *iv,int uid,std::string random
 //    std::cout<<"enter\n";
     int random_key_len=decrypt((unsigned char *)encrypted_randomkey.c_str(),strlen(encrypted_randomkey.c_str()),randkey,randiv,randomkey);
     randomkey[random_key_len]='\0';
-    std::cout<<"random key"<<randkey<<"\n";
+//    std::cout<<"random key"<<randkey<<"\n";
 
     unsigned char out[200];
     int len=49;
@@ -88,51 +186,23 @@ int check_write_permission(std::string filename){
     exit(errno);
 }
 
-void handleErrors(void)
-{
-    ERR_print_errors_fp(stderr);
-    abort();
-}
-
-int decrypt(unsigned char *ciphertext, int ciphertext_len, unsigned char *key,
-            unsigned char *iv, unsigned char *plaintext){
+int decrypt(unsigned char *ciphertext, int ciphertext_len, unsigned char *key,unsigned char *iv, unsigned char *plaintext){
     EVP_CIPHER_CTX *ctx;
 
     int len;
 
     int plaintext_len;
 
-    /* Create and initialise the context */
-    if(!(ctx = EVP_CIPHER_CTX_new()))
-        handleErrors();
+    // Create and initialise the context
+    ctx = EVP_CIPHER_CTX_new();
 
-    /*
-     * Initialise the decryption operation. IMPORTANT - ensure you use a key
-     * and IV size appropriate for your cipher
-     * In this example we are using 256 bit AES (i.e. a 256 bit key). The
-     * IV size for *most* modes is the same as the block size. For AES this
-     * is 128 bits
-     */
-    if(1 != EVP_DecryptInit_ex(ctx, EVP_aes_256_ecb(), NULL, key, iv))
-        handleErrors();
+    //decrypt initialisation using aes 256 ecb
+    EVP_DecryptInit_ex(ctx, EVP_aes_256_ecb(), NULL, key, iv);
 
-    /*
-     * Provide the message to be decrypted, and obtain the plaintext output.
-     * EVP_DecryptUpdate can be called multiple times if necessary.
-     */
-    if(1 != EVP_DecryptUpdate(ctx, plaintext, &len, ciphertext, ciphertext_len))
-        handleErrors();
+    EVP_DecryptUpdate(ctx, plaintext, &len, ciphertext, ciphertext_len);
     plaintext_len = len;
-
-    /*
-     * Finalise the decryption. Further plaintext bytes may be written at
-     * this stage.
-     */
-    if(1 != EVP_DecryptFinal_ex(ctx, plaintext + len, &len))
-        handleErrors();
+    EVP_DecryptFinal_ex(ctx, plaintext + len, &len);
     plaintext_len += len;
-
-    /* Clean up */
     EVP_CIPHER_CTX_free(ctx);
 
     return plaintext_len;
@@ -144,40 +214,60 @@ int encrypt(unsigned char *plaintext, int plaintext_len, unsigned char *key,
     int len;
 
     int ciphertext_len;
-
-    /* Create and initialise the context */
-    if(!(ctx = EVP_CIPHER_CTX_new()))
-        handleErrors();
-
-    /*
-     * Initialise the encryption operation. IMPORTANT - ensure you use a key
-     * and IV size appropriate for your cipher
-     * In this example we are using 256 bit AES (i.e. a 256 bit key). The
-     * IV size for *most* modes is the same as the block size. For AES this
-     * is 128 bits
-     */
-    if(1 != EVP_EncryptInit_ex(ctx, EVP_aes_256_ecb(), NULL, key, iv))
-        handleErrors();
-
-    /*
-     * Provide the message to be encrypted, and obtain the encrypted output.
-     * EVP_EncryptUpdate can be called multiple times if necessary
-     */
-    if(1 != EVP_EncryptUpdate(ctx, ciphertext, &len, plaintext, plaintext_len))
-        handleErrors();
+    ctx = EVP_CIPHER_CTX_new();
+    EVP_EncryptInit_ex(ctx, EVP_aes_256_ecb(), NULL, key, iv);
+    EVP_EncryptUpdate(ctx, ciphertext, &len, plaintext, plaintext_len);
     ciphertext_len = len;
-
-    /*
-     * Finalise the encryption. Further ciphertext bytes may be written at
-     * this stage.
-     */
-    if(1 != EVP_EncryptFinal_ex(ctx, ciphertext + len, &len))
-        handleErrors();
+    EVP_EncryptFinal_ex(ctx, ciphertext + len, &len);
     ciphertext_len += len;
-
-    /* Clean up */
     EVP_CIPHER_CTX_free(ctx);
 
     return ciphertext_len;
 }
 
+bool RSASign( RSA* rsa,const unsigned char* Msg,size_t MsgLen,unsigned char** EncMsg,size_t* MsgLenEnc) {
+    EVP_MD_CTX* m_RSASignCtx = EVP_MD_CTX_create();
+    EVP_PKEY* priKey  = EVP_PKEY_new();
+    EVP_PKEY_assign_RSA(priKey, rsa);
+    if (EVP_DigestSignInit(m_RSASignCtx,NULL, EVP_sha256(), NULL,priKey)<=0) {
+        return false;
+    }
+    if (EVP_DigestSignUpdate(m_RSASignCtx, Msg, MsgLen) <= 0) {
+        return false;
+    }
+    if (EVP_DigestSignFinal(m_RSASignCtx, NULL, MsgLenEnc) <=0) {
+        return false;
+    }
+    *EncMsg = (unsigned char*)malloc(*MsgLenEnc);
+    if (EVP_DigestSignFinal(m_RSASignCtx, *EncMsg, MsgLenEnc) <= 0) {
+        return false;
+    }return true;
+}
+
+bool RSAVerifySignature( RSA* rsa,unsigned char* MsgHash,size_t MsgHashLen,const char* Msg,size_t MsgLen,bool* Authentic) {
+    *Authentic = false;
+    EVP_PKEY* pubKey  = EVP_PKEY_new();
+    EVP_PKEY_assign_RSA(pubKey, rsa);
+    EVP_MD_CTX* m_RSAVerifyCtx = EVP_MD_CTX_create();
+
+    if (EVP_DigestVerifyInit(m_RSAVerifyCtx,NULL, EVP_sha256(),NULL,pubKey)<=0) {
+        return false;
+    }
+    if (EVP_DigestVerifyUpdate(m_RSAVerifyCtx, Msg, MsgLen) <= 0) {
+        return false;
+    }
+    int AuthStatus = EVP_DigestVerifyFinal(m_RSAVerifyCtx, MsgHash, MsgHashLen);
+    if (AuthStatus==1) {
+        *Authentic = true;
+
+        return true;
+    } else if(AuthStatus==0){
+        *Authentic = false;
+
+        return true;
+    } else{
+        *Authentic = false;
+
+        return false;
+    }
+}

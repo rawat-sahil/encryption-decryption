@@ -6,9 +6,7 @@
 
 void fget_decrypt_rsa(std::string randomfile,std::string publickeyFile,std::string filename){
     check_read_permission(filename); // exits the program either the file does not exist or does not have read permission
-    /* A 256 bit key */
     unsigned char key[33];
-    /* A 128 bit IV */
     unsigned char iv[17] ;
     struct stat statbuf;
     check_file_exist(filename, &statbuf);
@@ -19,7 +17,7 @@ void fget_decrypt_rsa(std::string randomfile,std::string publickeyFile,std::stri
     int  decryptedtext_len;
 
 
-//    fverify(filename,publickeyFile);
+    fverify(filename,publickeyFile);
     std::ifstream myfile;
     myfile.open(filename.c_str());
     std::string line;

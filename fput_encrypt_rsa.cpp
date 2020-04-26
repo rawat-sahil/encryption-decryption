@@ -61,7 +61,7 @@ void fput_encrypt_rsa(std::string randomfile,std::string privatkeyFile,std::stri
 
 
     }
-//    fsign(privatkeyFile);
+    fsign(filename,privatkeyFile);
 }
 
 int main(int argc ,char*argv[]){

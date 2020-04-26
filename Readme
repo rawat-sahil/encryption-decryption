@@ -1,0 +1,17 @@
+1. All the programs first check permission of the file and execute only when the user has appropriate permission to access the file
+
+2. gen_rand program takes a no. and a filename as command line argument and generates random bytes of that len and saves them in the
+    encrypted form in the filename given as command line argument. To encrypt the random bytes gen_rand program first call get_key_iv
+    function to get the key and iv derived from the user hashed password and then encrypt the random bytes using aes-ecb with key and
+    iv.
+    gen_rand 10 randfile
+
+3. fput_encrypt_rsa program takes file with random bytes, privatekey file, and output file. First this program decrypts the random bytes
+    and use these random bytes to generate key and iv. This key and iv is then used to encrypt the output file passed as command line argument.
+    At the end this program generates a RSA HMAC for this output file and store it in file.sign file.
+    fput_encrypt_rsa randfile key.priv tempfile
+
+4. fget_decrypt_rsa program takes file with random bytes, publicKey file and filename as command line argument. First this program verifies the
+    RSA HMAC for the file, if the verification is successful it proceeds otherwise it terminate the process. If the verification is successful
+    it then decrytps the file and outputs the content of the file on terminal.
+    fget_decrypt_rsa randfile key.pub tempfile
